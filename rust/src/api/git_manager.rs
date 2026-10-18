@@ -19,7 +19,7 @@ use std::{
     time::Instant,
 };
 use uuid::Uuid;
-use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce};
+use aes_gcm::{Aes256Gcm, KeyInit, Nonce};
 use aes_gcm::aead::Aead;
 use base64::{Engine as _, engine::general_purpose};
 use rand::Rng;
@@ -5461,17 +5461,17 @@ pub async fn git_crypt_encrypt(
         .map_err(|e| git2::Error::from_str(&format!("Failed to read key file: {}", e)))?;
     
     // Ensure key is 32 bytes for AES-256
-    let key = if key_bytes.len() >= 32 {
-        &key_bytes[..32]
+    let key_bytes = if key_bytes.len() >= 32 {
+        key_bytes[..32].to_vec()
     } else {
         // Pad with zeros if too short (not ideal, but functional)
         let mut padded = vec![0u8; 32];
         padded[..key_bytes.len()].copy_from_slice(&key_bytes);
-        &padded
+        padded
     };
     
-    let key: &Key<Aes256Gcm> = Key::from_slice(key);
-    let cipher = Aes256Gcm::new(key);
+    let cipher = Aes256Gcm::new_from_slice(&key_bytes)
+        .map_err(|e| git2::Error::from_str(&format!("Invalid key: {}", e)))?;
     
     // Read file content
     let file_path = Path::new(&file_path);
@@ -5535,16 +5535,16 @@ pub async fn git_crypt_decrypt(
         .map_err(|e| git2::Error::from_str(&format!("Failed to read key file: {}", e)))?;
     
     // Ensure key is 32 bytes for AES-256
-    let key = if key_bytes.len() >= 32 {
-        &key_bytes[..32]
+    let key_bytes = if key_bytes.len() >= 32 {
+        key_bytes[..32].to_vec()
     } else {
         let mut padded = vec![0u8; 32];
         padded[..key_bytes.len()].copy_from_slice(&key_bytes);
-        &padded
+        padded
     };
     
-    let key: &Key<Aes256Gcm> = Key::from_slice(key);
-    let cipher = Aes256Gcm::new(key);
+    let cipher = Aes256Gcm::new_from_slice(&key_bytes)
+        .map_err(|e| git2::Error::from_str(&format!("Invalid key: {}", e)))?;
     
     // Read encrypted file
     let file_path = Path::new(&file_path);
