@@ -1,3 +1,5 @@
+#![allow(unused_imports, unused_variables)]
+
 use flutter_rust_bridge::DartFnFuture;
 use git2::{
     BranchType, CertificateCheckStatus, Cred, DiffOptions, ErrorCode, FetchOptions, PushOptions,
@@ -17,10 +19,8 @@ use std::{
     time::Instant,
 };
 use uuid::Uuid;
-use aes_gcm::{Aes256Gcm, Key, Nonce};
-use aes_gcm::aead::{Aead, NewAead};
-use argon2::{Argon2, PasswordHasher};
-use argon2::password_hash::{SaltString, rand_core::OsRng};
+use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce};
+use aes_gcm::aead::Aead;
 use base64::{Engine as _, engine::general_purpose};
 use rand::Rng;
 
@@ -4271,7 +4271,7 @@ pub async fn abort_merge(
 }
 
 pub async fn generate_ssh_key(
-    format: &str,
+    _format: &str,
     passphrase: &str,
     log: impl Fn(LogType, String) -> DartFnFuture<()> + Send + Sync + 'static,
 ) -> (String, String) {
@@ -5226,10 +5226,11 @@ pub async fn squash_commits(
         &repo,
         Some("HEAD"),
         &signature,
-        &signature,
         squash_message,
         &tree,
         &[&parent_commit],
+        None,
+        &log_callback,
     )?;
 
     swl!(repo.cleanup_state())?;
