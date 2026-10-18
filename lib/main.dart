@@ -4370,33 +4370,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage> with WidgetsBindingObse
                   );
                 },
               ),
-              ProviderBuilder<bool>(
-                provider: hasGitFiltersProvider,
-                builder: (context, hasFiltersAsync) => !(hasFiltersAsync.valueOrNull ?? false)
-                    ? SizedBox.shrink()
-                    : GestureDetector(
-                        onTap: () => launchUrl(Uri.parse(playStoreLink)),
-                        child: Container(
-                          decoration: BoxDecoration(color: colours.tertiaryInfo),
-                          padding: EdgeInsets.symmetric(vertical: spaceXXS, horizontal: spaceSM),
-                          child: Center(
-                            child: Text.rich(
-                              textAlign: TextAlign.center,
-                              TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: t.unsupportedGitAttributes,
-                                    style: TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  TextSpan(text: " "),
-                                  TextSpan(text: t.tapToOpenPlayStore),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-              ),
               FutureBuilder(
                 future: hasNetworkConnection(),
                 builder: (context, snapshot) => snapshot.data == false

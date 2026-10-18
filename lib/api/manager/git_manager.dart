@@ -1298,15 +1298,86 @@ class GitManager {
   }
 
   static Future<bool> hasGitFilters([int? repomanRepoindex]) async {
-    return await _runWithLock(priority: 2, GitManagerRs.boolRunWithLock, await _resolveRepoIndex(repomanRepoindex), LogType.HasGitFilters, (
-          dirPath,
-        ) async {
-          final file = File('$dirPath/$gitAttributesPath');
-          if (!file.existsSync()) return false;
-          final contents = file.readAsStringSync();
-          return RegExp(r'(filter|diff|merge)=').hasMatch(contents);
-        }) ??
-        false;
+    // Paywall removed - always return false to disable the filter check
+    return false;
+  }
+
+  // Git-crypt functions
+  static Future<void> gitCryptInit([int? repomanRepoindex]) async {
+    return await _runWithLock(
+      GitManagerRs.voidRunWithLock,
+      await _resolveRepoIndex(repomanRepoindex),
+      LogType.GitCryptInit,
+      (dirPath) async {
+        await GitManagerRs.gitCryptInit(pathString: dirPath);
+      },
+    );
+  }
+
+  static Future<void> gitCryptSetKeyPath(String keyPath, [int? repomanRepoindex]) async {
+    return await _runWithLock(
+      GitManagerRs.voidRunWithLock,
+      await _resolveRepoIndex(repomanRepoindex),
+      LogType.GitCryptSetKeyPath,
+      (dirPath) async {
+        await GitManagerRs.gitCryptSetKeyPath(pathString: dirPath, keyPath: keyPath);
+      },
+    );
+  }
+
+  static Future<void> gitCryptUnlock([int? repomanRepoindex]) async {
+    return await _runWithLock(
+      GitManagerRs.voidRunWithLock,
+      await _resolveRepoIndex(repomanRepoindex),
+      LogType.GitCryptUnlock,
+      (dirPath) async {
+        await GitManagerRs.gitCryptUnlock(pathString: dirPath);
+      },
+    );
+  }
+
+  static Future<void> gitCryptLock([int? repomanRepoindex]) async {
+    return await _runWithLock(
+      GitManagerRs.voidRunWithLock,
+      await _resolveRepoIndex(repomanRepoindex),
+      LogType.GitCryptLock,
+      (dirPath) async {
+        await GitManagerRs.gitCryptLock(pathString: dirPath);
+      },
+    );
+  }
+
+  static Future<GitCryptStatus> gitCryptStatus([int? repomanRepoindex]) async {
+    return await _runWithLock(
+      GitManagerRs.gitCryptStatusRunWithLock,
+      await _resolveRepoIndex(repomanRepoindex),
+      LogType.GitCryptStatus,
+      (dirPath) async {
+        return await GitManagerRs.gitCryptStatus(pathString: dirPath);
+      },
+    );
+  }
+
+  static Future<void> gitCryptEncrypt(String filePath, [int? repomanRepoindex]) async {
+    return await _runWithLock(
+      GitManagerRs.voidRunWithLock,
+      await _resolveRepoIndex(repomanRepoindex),
+      LogType.GitCryptStatus,
+      (dirPath) async {
+        await GitManagerRs.gitCryptEncrypt(pathString: dirPath, file_path: filePath);
+      },
+    );
+  }
+
+  static Future<void> gitCryptDecrypt(String filePath, [int? repomanRepoindex]) async {
+    return await _runWithLock(
+      GitManagerRs.voidRunWithLock,
+      await _resolveRepoIndex(repomanRepoindex),
+      LogType.GitCryptStatus,
+      (dirPath) async {
+        await GitManagerRs.gitCryptDecrypt(pathString: dirPath, file_path: filePath);
+      },
+    );
   }
 
   static Future<List<String>> getSubmodulePaths(String repoPath, {int? repoIndex}) async {

@@ -108,6 +108,50 @@ class _SettingsMain extends ConsumerState<SettingsMain> with WidgetsBindingObser
     readGitInfoExclude = runGitOperation<String>(LogType.ReadGitInfoExclude, (event) => event?["result"] ?? "");
   }
 
+  Future<void> _showGitCryptKeyPathDialog(BuildContext context, String currentKeyPath) async {
+    final TextEditingController controller = TextEditingController(text: currentKeyPath);
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: colours.primaryDark,
+        title: Text("Set Git-Crypt Key Path", style: TextStyle(color: colours.primaryLight)),
+        content: TextField(
+          controller: controller,
+          style: TextStyle(color: colours.primaryLight),
+          decoration: InputDecoration(
+            hintText: "Path to git-crypt key file",
+            hintStyle: TextStyle(color: colours.secondaryLight),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancel", style: TextStyle(color: colours.primaryLight)),
+          ),
+          TextButton(
+            onPressed: () async {
+              final keyPath = controller.text.trim();
+              if (keyPath.isNotEmpty) {
+                await GitManager.gitCryptSetKeyPath(keyPath);
+                if (mounted) setState(() {});
+              }
+              Navigator.pop(context);
+            },
+            child: Text("Set", style: TextStyle(color: colours.primaryPositive)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showGitCryptUnlockDialog(BuildContext context, String keyPath) async {
+    if (keyPath.isEmpty) {
+      await _showGitCryptKeyPathDialog(context, keyPath);
+      return;
+    }
+    await GitManager.gitCryptUnlock();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -503,6 +547,105 @@ class _SettingsMain extends ConsumerState<SettingsMain> with WidgetsBindingObser
                               maxLines: -1,
                               minLines: -1,
                               isTextArea: true,
+                            ),
+                            SizedBox(height: spaceSM),
+                            // Git-crypt section
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final gitCryptStatusAsync = ref.watch(gitCryptStatusProvider);
+                                return gitCryptStatusAsync.when(
+                                  data: (status) => Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      TextButton.icon(
+                                        onPressed: () async {
+                                          if (!status.is_initialized) {
+                                            await GitManager.gitCryptInit();
+                                            ref.read(gitCryptStatusProvider.notifier).refresh();
+                                          } else if (!status.is_unlocked) {
+                                            await _showGitCryptUnlockDialog(context, status.key_path);
+                                            ref.read(gitCryptStatusProvider.notifier).refresh();
+                                          } else {
+                                            await GitManager.gitCryptLock();
+                                            ref.read(gitCryptStatusProvider.notifier).refresh();
+                                          }
+                                          if (mounted) setState(() {});
+                                        },
+                                        style: ButtonStyle(
+                                          shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.all(cornerRadiusMD))),
+                                        ),
+                                        label: SizedBox(
+                                          width: double.infinity,
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                status.is_initialized
+                                                    ? (status.is_unlocked ? t.gitCryptLock : t.gitCryptUnlock)
+                                                    : t.gitCryptInit,
+                                                style: TextStyle(color: colours.primaryLight, fontSize: textMD, fontWeight: FontWeight.bold),
+                                              ),
+                                              Text(
+                                                status.is_initialized
+                                                    ? (status.is_unlocked ? t.gitCryptLockDescription : t.gitCryptUnlockDescription)
+                                                    : t.gitCryptInitDescription,
+                                                style: TextStyle(color: colours.secondaryLight, fontSize: textSM, fontWeight: FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        iconAlignment: IconAlignment.end,
+                                        icon: FaIcon(
+                                          status.is_initialized
+                                              ? (status.is_unlocked ? FontAwesomeIcons.lock : FontAwesomeIcons.lockOpen)
+                                              : FontAwesomeIcons.shieldHalved,
+                                          color: status.is_unlocked ? colours.primaryPositive : colours.primaryLight,
+                                          size: textLG,
+                                        ),
+                                      ),
+                                      if (status.is_initialized) ...[
+                                        SizedBox(height: spaceSM),
+                                        TextButton.icon(
+                                          onPressed: () async {
+                                            await _showGitCryptKeyPathDialog(context, status.key_path);
+                                            ref.read(gitCryptStatusProvider.notifier).refresh();
+                                            if (mounted) setState(() {});
+                                          },
+                                          style: ButtonStyle(
+                                            shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.all(cornerRadiusMD))),
+                                          ),
+                                          label: SizedBox(
+                                            width: double.infinity,
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  t.gitCryptSetKeyPath,
+                                                  style: TextStyle(color: colours.primaryLight, fontSize: textMD, fontWeight: FontWeight.bold),
+                                                ),
+                                                Text(
+                                                  status.key_path.isEmpty ? t.gitCryptNoKeyPath : status.key_path,
+                                                  style: TextStyle(color: colours.secondaryLight, fontSize: textSM, fontWeight: FontWeight.bold),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          iconAlignment: IconAlignment.end,
+                                          icon: FaIcon(
+                                            FontAwesomeIcons.key,
+                                            color: status.key_path.isEmpty ? colours.primaryLight : colours.primaryPositive,
+                                            size: textLG,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  loading: () => SizedBox.shrink(),
+                                  error: (_, __) => SizedBox.shrink(),
+                                );
+                              },
                             ),
                             SizedBox(height: spaceSM),
                             FutureBuilder(

@@ -8,6 +8,7 @@ import 'package:GitSync/api/logger.dart';
 import 'package:GitSync/constant/strings.dart';
 import 'package:GitSync/global.dart';
 import 'package:GitSync/src/rust/api/git_manager.dart' as GitManagerRs;
+import 'package:GitSync/type/git_crypt.dart';
 import 'package:GitSync/type/git_provider.dart';
 import 'package:GitSync/type/showcase_feature.dart';
 import 'package:GitSync/api/manager/auth/git_provider_manager.dart';
@@ -203,6 +204,20 @@ class HasGitFiltersNotifier extends CachedGitNotifier<bool> {
 }
 
 final hasGitFiltersProvider = AsyncNotifierProvider<HasGitFiltersNotifier, bool>(HasGitFiltersNotifier.new);
+
+class GitCryptStatusNotifier extends AsyncNotifier<GitCryptStatus> {
+  @override
+  Future<GitCryptStatus> build() async {
+    return await GitManager.gitCryptStatus();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => GitManager.gitCryptStatus());
+  }
+}
+
+final gitCryptStatusProvider = AsyncNotifierProvider<GitCryptStatusNotifier, GitCryptStatus>(GitCryptStatusNotifier.new);
 
 class ConflictingFilesNotifier extends CachedGitNotifier<List<(String, GitManagerRs.ConflictType)>> {
   @override

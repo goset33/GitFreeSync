@@ -120,6 +120,11 @@ enum LogType {
   GetRepoBranches,
   WorkdirFileDiff,
   StageFileLines,
+  GitCryptInit,
+  GitCryptUnlock,
+  GitCryptLock,
+  GitCryptSetKeyPath,
+  GitCryptStatus,
 }
 
 enum From { GLOBAL_SETTINGS, ERROR_DIALOG, CODE_EDITOR, SYNC_DURING_DETACHED_HEAD }

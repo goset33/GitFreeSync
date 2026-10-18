@@ -1,10 +1,6 @@
 name: Release OSS (APK)
 
 on:
-  push:
-    tags:
-      - v*
-
   workflow_dispatch:
 
 jobs:
