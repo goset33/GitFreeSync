@@ -31,3 +31,4 @@ zlib-ng-compat = ["libssh2-sys/zlib-ng-compat"]
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
+non_snake_case = { level = "allow" }
