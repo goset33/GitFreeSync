@@ -5470,7 +5470,7 @@ pub async fn git_crypt_encrypt(
         &padded
     };
     
-    let key = Key::from_slice(key);
+    let key: &Key<Aes256Gcm> = Key::from_slice(key);
     let cipher = Aes256Gcm::new(key);
     
     // Read file content
@@ -5543,7 +5543,7 @@ pub async fn git_crypt_decrypt(
         &padded
     };
     
-    let key = Key::from_slice(key);
+    let key: &Key<Aes256Gcm> = Key::from_slice(key);
     let cipher = Aes256Gcm::new(key);
     
     // Read encrypted file
